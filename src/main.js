@@ -31,7 +31,19 @@ const DEMO_SEQUENCE_COUNT = 10;
 
 function subNav() {
   return `<div class="hero-subnav">
-    <nav>
+    <div class="hero-subnav-inner">
+      <button
+        class="subnav-menu-toggle"
+        id="subnav-menu-toggle"
+        type="button"
+        aria-label="Toggle navigation menu"
+        aria-expanded="${isSubnavMenuOpen ? 'true' : 'false'}"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    <nav class="${isSubnavMenuOpen ? 'open' : ''}">
       <button
         class="nav-btn ${route === 'home' ? 'active' : ''}"
         data-route="home"
@@ -90,6 +102,7 @@ function subNav() {
         Help
       </button>
     </nav>
+    </div>
   </div>`;
 }
 
@@ -321,6 +334,7 @@ function setTheme(themeKey, modeKey) {
 }
 
 let isDownloadMenuOpen = false;
+let isSubnavMenuOpen = false;
 
 function nav() {
   return `<header>
@@ -607,6 +621,20 @@ function render(options = {}) {
 
 const downloadToggle = document.getElementById('download-menu-toggle');
 const downloadDropdown = document.querySelector('.nav-dropdown');
+const subnavMenuToggle = document.getElementById('subnav-menu-toggle');
+const subnavNav = document.querySelector('.hero-subnav nav');
+
+if (subnavMenuToggle && subnavNav) {
+  subnavMenuToggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    isSubnavMenuOpen = !isSubnavMenuOpen;
+    render({ preserveScroll: true });
+  });
+
+  subnavNav.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+}
 
 if (downloadToggle && downloadDropdown) {
   downloadToggle.addEventListener('click', (event) => {
@@ -623,8 +651,16 @@ if (downloadToggle && downloadDropdown) {
 }
 
 document.addEventListener('click', () => {
+  let shouldRender = false;
   if (isDownloadMenuOpen) {
     isDownloadMenuOpen = false;
+    shouldRender = true;
+  }
+  if (isSubnavMenuOpen) {
+    isSubnavMenuOpen = false;
+    shouldRender = true;
+  }
+  if (shouldRender) {
     render({ preserveScroll: true });
   }
 });
@@ -632,6 +668,8 @@ document.addEventListener('click', () => {
 
   document.querySelectorAll('[data-route]').forEach((el) => {
     el.addEventListener('click', () => {
+      isDownloadMenuOpen = false;
+      isSubnavMenuOpen = false;
       route = normalizeRoute(el.getAttribute('data-route'));
       window.location.hash = route;
     });

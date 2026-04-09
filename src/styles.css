@@ -15,6 +15,7 @@ body {
   font-family: Inter, system-ui, Arial, sans-serif;
   color: var(--textPrimary);
   background: var(--background);
+  overflow-x: hidden;
 }
 #app { min-height: 100vh; display: flex; flex-direction: column; }
 #app > main { flex: 1; }
@@ -831,7 +832,7 @@ main {
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   margin-bottom: 0;
-  background-image: url('./assets/top-banner.jpg');
+  background-image: url('./assets/top-banner.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -855,14 +856,42 @@ main {
   border-bottom: none;
 }
 
-.hero-subnav nav {
+.hero-subnav-inner {
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+}
+
+.hero-subnav nav {
   padding: 2px 24px;
   display: flex;
   justify-content: flex-end;
   gap: 22px;
   align-items: center;
+}
+
+.subnav-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
+.subnav-menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 99px;
+  background: #fff;
 }
 
 .hero-subnav .nav-btn {
@@ -903,4 +932,195 @@ main {
 
 .nav-dropdown-menu {
   top: calc(100% + 6px);
+}
+
+@media (max-width: 1200px) {
+  main {
+    padding: 16px;
+  }
+
+  .hero-subnav nav {
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 14px;
+  }
+
+  .hero-subnav-inner {
+    max-width: none;
+  }
+
+  .black-nav {
+    justify-content: center;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  main {
+    padding: 14px;
+  }
+
+  .black-nav {
+    gap: 6px;
+    justify-content: center;
+    padding: 8px 10px;
+  }
+
+  .black-nav a {
+    font-size: 0.78rem;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .black-nav a img {
+    width: 13px;
+    height: 13px;
+  }
+
+  .page-hero {
+    margin-bottom: 0;
+    background-position: center;
+  }
+
+  .page-hero-overlay {
+    min-height: 240px;
+  }
+
+  .hero-subnav {
+    margin-top: 0;
+  }
+
+  .hero-subnav-inner {
+    padding: 0 12px;
+  }
+
+  .subnav-menu-toggle {
+    display: inline-flex;
+    margin: 8px 0;
+  }
+
+  .hero-subnav nav {
+    display: none;
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 6px;
+    gap: 6px;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(16, 94, 53, 0.98);
+    border-radius: 14px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+  }
+
+  .hero-subnav nav.open {
+    display: flex;
+  }
+
+  .hero-subnav nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hero-subnav .nav-btn,
+  .hero-subnav .nav-dropdown-toggle {
+    width: 100%;
+    justify-content: space-between;
+    white-space: nowrap;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    text-align: left;
+    border-radius: 10px;
+  }
+
+  .nav-dropdown-menu {
+    position: static;
+    min-width: 0;
+    margin-top: 4px;
+    padding: 6px 0 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .nav-dropdown-item {
+    font-size: 1rem;
+    padding: 12px 16px;
+    color: #fff;
+    border-radius: 10px;
+  }
+
+  .nav-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .hero h1,
+  .download-card h1,
+  .sequence-detail-header h1 {
+    font-size: 1.85rem;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .actions button,
+  .download-outline-btn,
+  button {
+    width: 100%;
+  }
+
+  .download-search {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+
+  .download-toolbar {
+    gap: 10px;
+  }
+
+  .page-hero-overlay {
+    min-height: 180px;
+  }
+
+  .black-nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .black-nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .hero-subnav nav {
+    padding: 6px;
+  }
+
+  .hero-subnav .nav-btn,
+  .hero-subnav .nav-dropdown-toggle {
+    font-size: 0.9rem;
+    padding: 8px 9px;
+  }
+
+  .sequence-detail-viewer,
+  #sequence-detail-molstar .msp-plugin,
+  #sequence-detail-molstar .msp-layout-standard {
+    min-height: 320px;
+    height: 320px !important;
+  }
 }
