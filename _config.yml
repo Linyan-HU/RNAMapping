@@ -1,0 +1,20 @@
+title: RNAcentre Unified Template (Jekyll)
+description: Jekyll-hosted static version of rnacentre template
+markdown: kramdown
+kramdown:
+  input: GFM
+
+# Keep static frontend folders available as-is
+include:
+  - src
+  - pdbfiles
+  - singlecell-viewer
+
+# common defaults
+exclude:
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - .jekyll-metadata
+  - Gemfile.lock

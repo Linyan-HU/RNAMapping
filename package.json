@@ -1,0 +1,11 @@
+{
+  "name": "web-template-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.mjs",
+    "verify:mvp": "node scripts/verify-mvp.mjs"
+  }
+}

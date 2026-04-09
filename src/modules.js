@@ -1,0 +1,634 @@
+import { aptamerMultiSelectRows, browseRows, detailEvidenceRows, provenanceHistory } from './data.js';
+
+export function renderGlobalSearch() {
+  return `<section class="page-hero" id="C-SEARCH-001">
+    <div class="page-hero-overlay"></div>
+  </section>`;
+}
+
+
+
+
+export function renderFacetPanel() {
+  return `<aside class="card"><h3>C-FACET-001 Facet Panel</h3><ul><li>Type</li><li>Species</li><li>Evidence</li><li>Date</li><li>Source</li></ul></aside>`;
+}
+
+export function renderResultList() {
+  const rows = browseRows
+    .map(
+      (row) =>
+        `<tr><td>${row.id}</td><td>${row.name}</td><td><em>${row.species}</em></td><td>${row.ligand}</td><td>${row.evidence}</td></tr>`
+    )
+    .join('');
+
+  return `<section class="card"><h3>C-RESULT-002 Result List</h3><table><thead><tr><th>ID</th><th>Name</th><th>Species</th><th>Ligand</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+
+export function renderEvidenceTable() {
+  const rows = detailEvidenceRows
+    .map((row) => `<tr><td>${row.method}</td><td>${row.metric}</td><td>${row.score}</td></tr>`)
+    .join('');
+
+  return `<section class="card"><h3>C-EVID-001 Evidence Table</h3><table><thead><tr><th>Method</th><th>Metric</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+
+export function renderProvenanceSummary() {
+  return `<section class="card"><h3>C-PROV-001 Provenance Summary</h3><p>Source: curated release 2026.03 • Snapshot: v1.0.0 • Confidence: reviewed</p></section>`;
+}
+
+export function renderProvenanceHistory() {
+  const items = provenanceHistory.map((event) => `<li>${event}</li>`).join('');
+  return `<section class="card"><h3>C-PROV-002 Provenance History</h3><ol>${items}</ol></section>`;
+}
+
+function getGithubPagesBasePath() {
+  const host = window.location.hostname;
+  if (!host.endsWith('github.io')) return '';
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts.length ? `/${parts[0]}` : '';
+}
+
+export function renderVisualizationShowcase() {
+  const basePath = getGithubPagesBasePath();
+  const singleCellUrl = `${basePath}/singlecell-viewer/dist/`;
+
+  return `
+  <section class="card">
+    <h2>Visualization Module Showcase (example page)</h2>
+    <p>Combined module inventory inspired by RiboCentre / Riboswitch / Aptamer / GZNL Data Portal / RNA-Puzzles.</p>
+  </section>
+
+  <section class="card" id="V-MULTISELECT-001">
+    <div class="dashboard-section">
+      <h3 style="text-align:center; margin-bottom: 8px;">Aptamer-style Multi-selection Module</h3>
+      <h4 style="text-align:center; margin-bottom: 20px;">Data Statistics Dashboard</h4>
+
+      <div class="amir-container">
+        <div class="chart-container two">
+          <div class="chart-wrapper" id="V-HIST-001">
+            <div class="chart-header">
+              <h4 class="chart-title">Year Distribution</h4>
+              <div class="chart-controls"><span class="chart-info">Click bars for multi-selection</span></div>
+            </div>
+            <div class="chart-content"><div id="yearChart" class="amir-chart"></div></div>
+          </div>
+
+          <div class="chart-wrapper" id="V-PIE-001">
+            <div class="chart-header">
+              <h4 class="chart-title">Category Distribution</h4>
+              <div class="chart-controls"><span class="chart-info">Click sectors for multi-selection</span></div>
+            </div>
+            <div class="chart-content"><div id="ligandChart" class="amir-chart"></div></div>
+          </div>
+        </div>
+
+        <section class="filter-controls" id="V-SEARCH-001">
+          <div class="filter-header">
+            <h4 class="filter-title">Data Filtering</h4>
+            <div class="filter-actions">
+              <button class="filter-btn reset-btn" id="resetAllFilters">Reset All</button>
+              <button class="filter-btn export-btn" id="exportData">Export Data</button>
+            </div>
+          </div>
+          <div class="filter-tags" id="filterTags"></div>
+        </section>
+
+        <section class="data-table-section" id="V-TABLE-001">
+          <div class="chart-header">
+            <h4 class="chart-title">Data Details</h4>
+            <div class="chart-controls"><span class="chart-info" id="tableInfo">Showing all entries</span></div>
+          </div>
+          <div class="table-container">
+            <div class="table-responsive">
+              <table id="dataTable" class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Sequence Name</th>
+                    <th>Aptamer Name</th>
+                    <th>Discovery Year</th>
+                    <th>Category</th>
+                    <th>Sequence (5'-3')</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-summary">
+          <div class="summary-cards">
+            <div class="summary-card">
+              <span class="summary-label">Currently Showing</span>
+              <span class="summary-count" id="currentCount">0</span>
+              <span class="summary-unit">entries</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Filter Ratio</span>
+              <span class="summary-percentage" id="filterPercentage">0%</span>
+              <span class="summary-unit">visible</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="viz-grid">
+    <article class="card viz-card" id="V-RNA3D-001">
+      <h3>RNA 3D Structure Viewer (Mol*)</h3>
+      <p>Using PDBe Mol* style integration (as on Aptamer structure pages).</p>
+      <div class="search-row">
+        <input id="molstar-pdb" value="8K7W" aria-label="PDB ID" />
+        <button id="molstar-load" class="ghost">Load PDB</button>
+      </div>
+      <div id="molstar-status" class="mini-note">Viewer loading…</div>
+      <div class="structure-table">
+        <div class="viewerSection1">
+          <div id="myViewer1"></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card viz-card" id="V-SECONDARY-001">
+      <h3>RNA Secondary Structure Viewer (Forna)</h3>
+      <p>Forna module with custom nucleotide colors (aptamer-style).</p>
+      <div id="custom_colors" class="forna-host"></div>
+      <form onsubmit="return false" class="optionsform">
+        <textarea id="CustomColorText" name="hide" style="display:none;">1-5:#68AF31 56:blue 40:red 59-63:#68AF31 7-12:#18529A 14:#18529A 17-25:#18529A 29-34:#18529A 42-45:#C06D23 52-55:#C06D23</textarea>
+      </form>
+      <div id="forna-status" class="mini-note">Forna loading…</div>
+    </article>
+
+    <article class="card viz-card" id="V-SC-001">
+      <h3>Single-cell Embedding (UMAP/t-SNE)</h3>
+      <p>Embedded local single-cell viewer:</p>
+      <p><a href="${singleCellUrl}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></p>
+      <iframe
+        title="Single-cell viewer"
+        src="${singleCellUrl}"
+        class="umap-embed"
+        loading="lazy"
+      ></iframe>
+    </article>
+  </section>`;
+}
+
+function aggregate(rows, key) {
+  const map = new Map();
+  for (const row of rows) {
+    const value = row[key];
+    map.set(value, (map.get(value) || 0) + 1);
+  }
+  return [...map.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+}
+
+function toPiePaths(entries) {
+  const total = entries.reduce((s, [, n]) => s + n, 0) || 1;
+  let angle = -Math.PI / 2;
+  const cx = 90;
+  const cy = 90;
+  const r = 75;
+
+  return entries.map(([label, value], idx) => {
+    const portion = (value / total) * Math.PI * 2;
+    const start = angle;
+    const end = angle + portion;
+    angle = end;
+
+    const x1 = cx + r * Math.cos(start);
+    const y1 = cy + r * Math.sin(start);
+    const x2 = cx + r * Math.cos(end);
+    const y2 = cy + r * Math.sin(end);
+    const largeArc = portion > Math.PI ? 1 : 0;
+
+    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    return { label, value, path, idx };
+  });
+}
+
+export function initHeaderSearch() {
+  const input = document.getElementById('search-box-header');
+  const button = document.getElementById('search-button-header');
+  const results = document.getElementById('search-results-header');
+  if (!input || !button || !results) return;
+
+  function performSearch() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      results.style.display = 'none';
+      results.innerHTML = '';
+      return;
+    }
+
+    const matched = aptamerMultiSelectRows.filter((row) => {
+      const text = `${row.sequenceName} ${row.aptamerName} ${row.category} ${row.description} ${row.pdbId}`.toLowerCase();
+      return text.includes(q);
+    });
+
+    results.innerHTML = matched.length
+      ? matched
+          .slice(0, 8)
+          .map(
+            (row) => `<a class="search-result-item" href="#detail"><strong>${row.aptamerName}</strong> · ${row.category} · ${row.year} <span>${row.pdbId}</span></a>`
+          )
+          .join('')
+      : '<div class="search-result-item muted">No results found.</div>';
+
+    results.style.display = 'block';
+  }
+
+  if (input.dataset.boundSearch !== 'true') {
+    input.addEventListener('input', performSearch);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch();
+      }
+    });
+    button.addEventListener('click', performSearch);
+    input.dataset.boundSearch = 'true';
+  }
+
+  if (!window.__headerSearchDocBound) {
+    document.addEventListener('click', (e) => {
+      const liveResults = document.getElementById('search-results-header');
+      const liveInput = document.getElementById('search-box-header');
+      const liveButton = document.getElementById('search-button-header');
+      if (!liveResults || !liveInput || !liveButton) return;
+      if (!liveResults.contains(e.target) && e.target !== liveInput && e.target !== liveButton && !liveButton.contains(e.target)) {
+        liveResults.style.display = 'none';
+      }
+    });
+    window.__headerSearchDocBound = true;
+  }
+}
+
+export function initAptamerMultiSelect() {
+  const yearChart = document.getElementById('yearChart');
+  const ligandChart = document.getElementById('ligandChart');
+  const tableBody = document.getElementById('tableBody');
+  const tableInfo = document.getElementById('tableInfo');
+  const filterTags = document.getElementById('filterTags');
+  const resetBtn = document.getElementById('resetAllFilters');
+  const exportBtn = document.getElementById('exportData');
+  const currentCount = document.getElementById('currentCount');
+  const filterPercentage = document.getElementById('filterPercentage');
+
+  if (!yearChart || !ligandChart || !tableBody) return;
+
+  const totalRows = aptamerMultiSelectRows.length;
+  const selectedYears = new Set();
+  const selectedCategories = new Set();
+
+  const yearAgg = aggregate(aptamerMultiSelectRows, 'year');
+  const categoryAgg = aggregate(aptamerMultiSelectRows, 'category');
+
+  function applyFilters() {
+    return aptamerMultiSelectRows.filter((row) => {
+      const yearPass = selectedYears.size === 0 || selectedYears.has(row.year);
+      const catPass = selectedCategories.size === 0 || selectedCategories.has(row.category);
+      return yearPass && catPass;
+    });
+  }
+
+  function renderYearChart() {
+    const max = Math.max(...yearAgg.map(([, n]) => n), 1);
+    yearChart.innerHTML = `<div class="bar-chart">${yearAgg
+      .map(([year, count]) => {
+        const active = selectedYears.has(year);
+        const h = Math.round((count / max) * 100);
+        return `<button class="bar ${active ? 'active' : ''}" data-year="${year}" title="${year}: ${count}">
+          <span class="bar-fill" style="height:${h}%"></span>
+          <span class="bar-label">${year}</span>
+        </button>`;
+      })
+      .join('')}</div>`;
+
+    yearChart.querySelectorAll('.bar').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const year = Number(btn.dataset.year);
+        if (selectedYears.has(year)) selectedYears.delete(year);
+        else selectedYears.add(year);
+        refresh();
+      });
+    });
+  }
+
+  function renderPieChart() {
+    const sectors = toPiePaths(categoryAgg);
+    const colors = ['var(--primary)', 'var(--accent)', 'var(--primarySoft)', '#7c3aed', '#16a34a'];
+
+    ligandChart.innerHTML = `
+      <div class="pie-layout">
+        <svg viewBox="0 0 180 180" class="pie-svg" aria-label="category pie chart">
+          ${sectors
+            .map(
+              (s, i) => `<path d="${s.path}" data-category="${s.label}" fill="${colors[i % colors.length]}" class="pie-sector ${
+                selectedCategories.has(s.label) ? 'active' : ''
+              }"></path>`
+            )
+            .join('')}
+        </svg>
+        <div class="pie-legend">
+          ${categoryAgg
+            .map(
+              ([label, count], i) => `<button class="legend-item ${selectedCategories.has(label) ? 'active' : ''}" data-category="${label}">
+              <span class="dot" style="background:${colors[i % colors.length]}"></span>${label} (${count})</button>`
+            )
+            .join('')}
+        </div>
+      </div>`;
+
+    const toggle = (cat) => {
+      if (selectedCategories.has(cat)) selectedCategories.delete(cat);
+      else selectedCategories.add(cat);
+      refresh();
+    };
+
+    ligandChart.querySelectorAll('[data-category]').forEach((el) => {
+      el.addEventListener('click', () => toggle(el.dataset.category));
+    });
+  }
+
+  function renderFilterTags() {
+    const tags = [
+      ...[...selectedYears].map((y) => ({ kind: 'year', value: y })),
+      ...[...selectedCategories].map((c) => ({ kind: 'category', value: c }))
+    ];
+
+    filterTags.innerHTML = tags.length
+      ? tags
+          .map(
+            (t) => `<button class="chip" data-kind="${t.kind}" data-value="${t.value}">${t.kind}: ${t.value} ×</button>`
+          )
+          .join('')
+      : '<span class="mini-note">No active filters</span>';
+
+    filterTags.querySelectorAll('[data-kind]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.kind;
+        const value = btn.dataset.value;
+        if (kind === 'year') selectedYears.delete(Number(value));
+        if (kind === 'category') selectedCategories.delete(value);
+        refresh();
+      });
+    });
+  }
+
+  function renderTable() {
+    const rows = applyFilters();
+    tableBody.innerHTML = rows
+      .map(
+        (row, idx) => `<tr>
+      <td>${idx + 1}</td>
+      <td>${row.sequenceName}</td>
+      <td>${row.aptamerName}</td>
+      <td>${row.year}</td>
+      <td>${row.category}</td>
+      <td>${row.sequence}</td>
+      <td>${row.description}</td>
+    </tr>`
+      )
+      .join('');
+
+    tableInfo.textContent = `Showing ${rows.length} of ${totalRows} entries`;
+    currentCount.textContent = String(rows.length);
+    filterPercentage.textContent = `${Math.round((rows.length / totalRows) * 100)}%`;
+  }
+
+  function exportFiltered() {
+    const rows = applyFilters();
+    const header = ['No.', 'Sequence Name', 'Aptamer Name', 'Discovery Year', 'Category', 'Sequence', 'Description'];
+    const body = rows.map((r, i) => [i + 1, r.sequenceName, r.aptamerName, r.year, r.category, r.sequence, r.description]);
+    const csv = [header, ...body]
+      .map((line) => line.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aptamer_filtered_data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function refresh() {
+    renderYearChart();
+    renderPieChart();
+    renderFilterTags();
+    renderTable();
+  }
+
+  resetBtn?.addEventListener('click', () => {
+    selectedYears.clear();
+    selectedCategories.clear();
+    refresh();
+  });
+
+  exportBtn?.addEventListener('click', exportFiltered);
+
+  refresh();
+}
+
+async function loadMolstarAssets() {
+  if (!document.getElementById('pdbe-molstar-css')) {
+    const css = document.createElement('link');
+    css.id = 'pdbe-molstar-css';
+    css.rel = 'stylesheet';
+    css.href = 'https://cdn.jsdelivr.net/npm/pdbe-molstar@3.3.0/build/pdbe-molstar.css';
+    document.head.appendChild(css);
+  }
+
+  if (!window.PDBeMolstarPlugin) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/pdbe-molstar@3.3.0/build/pdbe-molstar-plugin.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+}
+
+async function loadFornaAssets() {
+  if (!document.getElementById('forna-css')) {
+    const css = document.createElement('link');
+    css.id = 'forna-css';
+    css.rel = 'stylesheet';
+    css.type = 'text/css';
+    css.href = 'https://www.ribocentre.org/css/fornac.css';
+    css.media = 'screen';
+    document.head.appendChild(css);
+  }
+
+  if (!window.jQuery) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://www.ribocentre.org/js/jquery.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  if (!window.d3) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://www.ribocentre.org/js/d3.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  if (!window.fornac) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://www.ribocentre.org/js/demo/rsvfornac.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+}
+
+export async function initSecondaryStructureModule() {
+  const status = document.getElementById('forna-status');
+  const host = document.getElementById('custom_colors');
+  const text = document.getElementById('CustomColorText');
+  if (!status || !host || !text) return;
+
+  try {
+    await loadFornaAssets();
+    host.innerHTML = '';
+    const container = new window.fornac.FornaContainer('#custom_colors', {
+      applyForce: 1,
+      editable: 'true',
+      initialSize: [450, 400]
+    });
+
+    const options = {
+      structure: '(((((.((((((.(..(((()))))...)))))).......((((......))))...)))))',
+      sequence: 'GGCGUCCUGGUAUCCAAUCCGGAUGUACUACCAGCUGAUGAGUCCCAAAUAGGACGAAACGCC'
+    };
+
+    container.addRNA(options.structure, options);
+    container.addCustomColorsText(text.value);
+    status.textContent = 'Forna secondary structure loaded.';
+  } catch (_e) {
+    status.textContent = 'Forna failed to load (remote scripts blocked).';
+  }
+}
+
+export async function initMolstarModule() {
+  const container = document.getElementById('myViewer1');
+  const status = document.getElementById('molstar-status');
+  const loadBtn = document.getElementById('molstar-load');
+  const pdbInput = document.getElementById('molstar-pdb');
+  if (!container || !status || !loadBtn || !pdbInput) return;
+
+  let viewer = null;
+  const basePath = getGithubPagesBasePath();
+  const localPdbUrl = `${basePath}/pdbfiles/8k7w_RNA+only.pdb`;
+
+  function renderLocalPdbTextFallback() {
+    container.innerHTML = `<div class="mini-note">Mol* script unavailable. Local PDB path:</div><pre class="pdb-fallback">${localPdbUrl}</pre>`;
+  }
+
+  async function loadStructureWithViewer(pdbId) {
+    const remoteCif = `https://files.rcsb.org/download/${pdbId}.cif`;
+    const customData = pdbId === '8K7W' ? { url: localPdbUrl, format: 'pdb' } : { url: remoteCif, format: 'cif' };
+
+    if (!viewer) {
+      viewer = new window.PDBeMolstarPlugin();
+      viewer.render(container, {
+        customData,
+        expanded: false,
+        hideControls: true,
+        bgColor: { r: 255, g: 255, b: 255 }
+      });
+      return;
+    }
+
+    viewer.visual.update({ customData }, true);
+  }
+
+  async function loadPdb() {
+    const pdbId = (pdbInput.value || '8K7W').trim().toUpperCase();
+    status.textContent = `Loading Mol* for ${pdbId}…`;
+
+    try {
+      await loadMolstarAssets();
+      await loadStructureWithViewer(pdbId);
+      status.textContent = pdbId === '8K7W' ? 'Loaded Mol* in #myViewer1 from /pdbfiles/8k7w_RNA+only.pdb' : `Loaded Mol* in #myViewer1 for ${pdbId}`;
+    } catch (_e) {
+      status.textContent = 'Mol* CDN blocked; cannot instantiate viewer. Local path is ready.';
+      renderLocalPdbTextFallback();
+    }
+  }
+
+  loadBtn.addEventListener('click', loadPdb);
+  await loadPdb();
+}
+
+export async function initSequenceDetailMolstar() {
+  const container = document.getElementById('sequence-detail-molstar');
+  const status = document.getElementById('sequence-detail-molstar-status');
+  if (!container || !status) return;
+
+  const basePath = getGithubPagesBasePath();
+  const localCifUrl = `${basePath}/8QO5-assembly1.cif`;
+
+  try {
+    await loadMolstarAssets();
+    const viewer = new window.PDBeMolstarPlugin();
+    viewer.render(container, {
+      customData: { url: localCifUrl, format: 'cif' },
+      expanded: false,
+      hideControls: true,
+      bgColor: { r: 255, g: 255, b: 255 }
+    });
+
+    status.textContent = 'Interactive Mol* view loaded from local 8QO5 assembly file.';
+  } catch (_e) {
+    status.textContent = '3D viewer unavailable right now.';
+  }
+}
+
+export function downloadRowsAsCsv(rows, filename = 'sequences.csv') {
+  if (!rows || !rows.length) return;
+
+  const headers = Object.keys(rows[0]);
+
+  const escapeCell = (value) => {
+    const text = String(value ?? '');
+    if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  };
+
+  const csv = [
+    headers.join(','),
+    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
