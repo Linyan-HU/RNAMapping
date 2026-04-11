@@ -15,7 +15,7 @@ Runnable visual-review example for the unified scientific database frontend.
   - clickable **Year bar chart**
   - clickable **Category pie chart**
   - filter tags/reset/export + filtered data table/summary
-- Mol* 3D viewer block with local test PDB path support (`/pdbfiles/8k7w_RNA+only.pdb`).
+- Mol* 3D viewer block with local test PDB path support (`/src/assets/pdb/8k7w_RNA_only.pdb`).
 - Forna-based secondary structure module.
 - Black top nav + black footer.
 

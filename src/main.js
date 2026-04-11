@@ -11,7 +11,8 @@ import {
   initAptamerMultiSelect,
   initSecondaryStructureModule,
   initMolstarModule,
-  initSequenceDetailMolstar
+  initSequenceDetailMolstar,
+  initSequenceDetailSecondaryHeatmap
 } from './modules.js';
 import {
   dataTypeCards,
@@ -27,7 +28,6 @@ import { downloadRowsAsCsv } from './modules.js';
 let sequenceRows = [];
 let selectedSequenceIds = new Set();
 let sequenceSearchQuery = '';
-const DEMO_SEQUENCE_COUNT = 10;
 
 function subNav() {
   return `<div class="hero-subnav">
@@ -69,7 +69,7 @@ function subNav() {
           aria-expanded="${isDownloadMenuOpen ? 'true' : 'false'}"
         >
           Download
-          <span class="dropdown-caret">▲</span>
+          <span class="dropdown-caret" aria-hidden="true"></span>
         </button>
 
         <div class="nav-dropdown-menu">
@@ -138,6 +138,246 @@ function getFilteredSequenceRows() {
   );
 }
 
+function renderSequenceDetailSecondaryContent(row) {
+  if (row.pdbName !== '5KPY' && row.pdbName !== '1AM0' && row.pdbName !== '4L81' && row.pdbName !== '5TPY') {
+    return `<div class="sequence-detail-placeholder">
+      <p>Secondary structure content will be added here.</p>
+    </div>`;
+  }
+
+  const is5kpy = row.pdbName === '5KPY';
+  const is1am0 = row.pdbName === '1AM0';
+  const is4l81 = row.pdbName === '4L81';
+  const structureText = is5kpy
+    ? '.......................................................................'
+    : is1am0
+      ? '((((((...........((((((....)))))).))))))'
+      : is4l81
+        ? '................................................................................................'
+        : '....(((((((((....)))).(((((((.[[[[..)))))))..)))))...]]]](((((....)))))';
+  const heatmapTitle = is5kpy ? 'Mutate-and-map Heatmap' : is1am0 ? 'ATP Titration Reactivity Map' : 'Mutate-and-map Heatmap';
+  const rdatUrl = is5kpy
+    ? './src/assets/data/RNAPZ9_1M7_0001.rdat'
+    : is1am0
+      ? './src/assets/data/ATPCON_TITR_0001.rdat'
+      : is4l81
+        ? './src/assets/data/RNAPZ8_1M7_0001.rdat'
+        : './src/assets/data/RNAPZ18_1M7_0000.rdat';
+  const summaryMarkup = is5kpy
+    ? `<div><dt>Dataset</dt><dd>RNA Puzzle 9</dd></div>
+          <div><dt>Modifier</dt><dd>SHAPE</dd></div>
+          <div><dt>Ligand</dt><dd>5-hydroxytryptophan (8.5 mM)</dd></div>
+          <div><dt>Buffer</dt><dd>50 mM Na-HEPES, pH 8.0</dd></div>
+          <div><dt>MgCl2</dt><dd>10 mM</dd></div>
+          <div><dt>Temperature</dt><dd>24 C</dd></div>`
+    : is1am0
+      ? `<div><dt>Dataset</dt><dd>control point ATP titration</dd></div>
+          <div><dt>Assay</dt><dd>StandardState</dd></div>
+          <div><dt>Ligand</dt><dd>ATP titration (0-5000 uM)</dd></div>
+          <div><dt>Buffer</dt><dd>50 mM Na-HEPES, pH 8.0</dd></div>
+          <div><dt>Temperature</dt><dd>24 C</dd></div>
+          <div><dt>Processing</dt><dd>background subtraction, overmodification correction</dd></div>`
+      : is4l81
+        ? `<div><dt>Dataset</dt><dd>RNA Puzzle 8</dd></div>
+          <div><dt>Modifier</dt><dd>SHAPE</dd></div>
+          <div><dt>Ligand</dt><dd>S-adenosylmethionine (8.8 mM)</dd></div>
+          <div><dt>Buffer</dt><dd>50 mM Na-HEPES, pH 8.0</dd></div>
+          <div><dt>MgCl2</dt><dd>10 mM</dd></div>
+          <div><dt>Temperature</dt><dd>24 C</dd></div>`
+        : `<div><dt>Dataset</dt><dd>RNA Puzzle 18</dd></div>
+          <div><dt>Experiment Type</dt><dd>Mutate and Map</dd></div>
+          <div><dt>Modifier</dt><dd>1M7</dd></div>
+          <div><dt>Buffer</dt><dd>50 mM Na-HEPES, pH 8.0</dd></div>
+          <div><dt>MgCl2</dt><dd>10 mM</dd></div>
+          <div><dt>Temperature</dt><dd>24 C</dd></div>
+          <div><dt>Processing</dt><dd>background subtraction, overmodification correction, normalization GAGUA</dd></div>`;
+  const filesMarkup = is5kpy
+    ? `<a class="sequence-secondary-link" href="./src/assets/data/RNAPZ9_1M7_0001.rdat" download>Download RDAT</a>`
+    : is1am0
+      ? `<a class="sequence-secondary-link" href="./src/assets/data/ATPCON_TITR_0001.rdat" download>Download RDAT</a>
+       <a class="sequence-secondary-link" href="./src/assets/data/ATPCON_TITR_0001_2.xls" download>Download XLS</a>`
+      : is4l81
+        ? `<a class="sequence-secondary-link" href="./src/assets/data/RNAPZ8_1M7_0001.rdat" download>Download RDAT</a>
+       <a class="sequence-secondary-link" href="./src/assets/data/RNAPZ8_1M7_0001_2.xls" download>Download XLS</a>`
+        : `<a class="sequence-secondary-link" href="./src/assets/data/RNAPZ18_1M7_0000.rdat" download>Download RDAT</a>
+       <a class="sequence-secondary-link" href="./src/assets/data/RNAPZ18_1M7_0000_1.xls" download>Download XLS</a>`;
+  const footnoteText = is5kpy
+    ? 'The local RDAT file is included in this project for future heatmap or reactivity visualization work.'
+    : is1am0
+      ? 'The local RDAT and XLS files are included in this project as source data for the ATP-responsive aptamer record.'
+      : is4l81
+        ? 'The local RDAT and XLS files are included in this project as source data for the SAM-responsive aptamer record.'
+        : 'The local RDAT and XLS files are included in this project as source data for the RNA Puzzle 18 record.';
+
+  return `<div class="sequence-secondary-layout">
+    <div class="sequence-secondary-top">
+      <div class="sequence-secondary-block">
+        <span class="sequence-secondary-label">Sequence</span>
+        <code class="sequence-secondary-code">${row.type ?? ''}</code>
+      </div>
+      <div class="sequence-secondary-block">
+        <span class="sequence-secondary-label">Structure</span>
+        <code class="sequence-secondary-code">${structureText}</code>
+      </div>
+    </div>
+
+    <div class="sequence-secondary-bottom">
+      <div class="sequence-secondary-main">
+      <section class="sequence-secondary-card sequence-secondary-heatmap-card">
+        <div class="sequence-secondary-card-header">
+          <h3>${heatmapTitle}</h3>
+          <span id="sequence-secondary-heatmap-status" class="mini-note">Loading heatmap…</span>
+        </div>
+        <div
+          id="sequence-secondary-heatmap"
+          class="sequence-secondary-heatmap-host"
+          data-rdat-url="${rdatUrl}"
+        ></div>
+      </section>
+      </div>
+
+      <aside class="sequence-secondary-side">
+      <div class="sequence-secondary-card">
+        <h3>Experiment Summary</h3>
+        <dl class="sequence-secondary-meta">
+          ${summaryMarkup}
+        </dl>
+      </div>
+
+      <div class="sequence-secondary-card">
+        <h3>Files</h3>
+        <div class="sequence-secondary-actions">
+          ${filesMarkup}
+        </div>
+        <p class="sequence-secondary-footnote">${footnoteText}</p>
+      </div>
+      </aside>
+    </div>
+  </div>`;
+}
+
+function renderSequenceDetailTertiaryContent(row) {
+  if (!row.structureFile) {
+    return `<div class="sequence-detail-placeholder">
+      <p>Tertiary structure content will be added here.</p>
+    </div>`;
+  }
+
+  return `<div class="sequence-detail-media">
+    <div id="sequence-detail-molstar-status" class="mini-note">Loading interactive 3D structure…</div>
+    <div
+      id="sequence-detail-molstar"
+      class="sequence-detail-viewer"
+      data-structure-url="./${row.structureFile}"
+      data-structure-format="cif"
+      data-structure-label="${row.pdbName ?? 'local structure'}"
+    ></div>
+  </div>`;
+}
+
+function renderSequenceDetailReferenceContent(row) {
+  if (row.pdbName === '5KPY') {
+    return `<div class="sequence-detail-reference-card">
+      <div class="sequence-detail-reference-list">
+        <article class="sequence-detail-reference-item">
+          <h3>[1] RNA-Puzzles Round IV: 3D structure predictions of four ribozymes and two aptamers.</h3>
+          <p class="sequence-detail-reference-authors">Miao Z, Adamiak RW, Antczak M, Boniecki MJ, Bujnicki J, Chen SJ, Cheng CY, Cheng Y, Chou FC, Das R, Dokholyan NV, Ding F, Geniesse C, Jiang Y, Joshi A, Krokhotin A, Magnus M, Mailhot O, Major F, Mann TH, Piatkowski P, Pluta R, Popenda M, Sarzynska J, Sun L, Szachniuk M, Tian S, Wang J, Wang J, Watkins AM, Wiedemann J, Xiao Y, Xu X, Yesselman JD, Zhang D, Zhang Y, Zhang Z, Zhao C, Zhao P, Zhou Y, Zok T, Zyla A, Ren A, Batey RT, Golden BL, Huang L, Lilley DM, Liu Y, Patel DJ, Westhof E. (2020)</p>
+          <p class="sequence-detail-reference-source">RNA (New York, N.Y.) 26(8):982-995</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/32371455/" target="_blank" rel="noopener noreferrer">PMID: 32371455</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1261/rna.075341.120" target="_blank" rel="noopener noreferrer">DOI: 10.1261/rna.075341.120</a>
+          </div>
+        </article>
+
+        <article class="sequence-detail-reference-item">
+          <h3>[2] Recurrent RNA motifs as scaffolds for genetically encodable small-molecule biosensors.</h3>
+          <p class="sequence-detail-reference-authors">Porter, E.B., Polaski, J.T., Morck, M.M., Batey, R.T. (2017)</p>
+          <p class="sequence-detail-reference-source">Nature Chemical Biology 13:295-301</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/28092358/" target="_blank" rel="noopener noreferrer">PubMed: 28092358</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1038/nchembio.2278" target="_blank" rel="noopener noreferrer">DOI: 10.1038/nchembio.2278</a>
+          </div>
+        </article>
+      </div>
+    </div>`;
+  }
+
+  if (row.pdbName === '1AM0') {
+    return `<div class="sequence-detail-reference-card">
+      <div class="sequence-detail-reference-list">
+        <article class="sequence-detail-reference-item">
+          <h3>[1] Computational design of three-dimensional RNA structure and function.</h3>
+          <p class="sequence-detail-reference-authors">Yesselman JD, Eiler D, Carlson ED, Gotrik MR, d'Aquino AE, Ooms AN, Kladwang W, Carlson PD, Shi X, Costantino DA, Herschlag D, Lucks JB, Jewett MC, Kieft JS, Das R. (2019)</p>
+          <p class="sequence-detail-reference-source">Nature Nanotechnology 14(9):866-873</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/31427748/" target="_blank" rel="noopener noreferrer">PMID: 31427748</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1038/s41565-019-0517-8" target="_blank" rel="noopener noreferrer">DOI: 10.1038/s41565-019-0517-8</a>
+          </div>
+        </article>
+
+        <article class="sequence-detail-reference-item">
+          <h3>[2] Structural Basis of RNA Folding and Recognition in an AMP-RNA Aptamer Complex.</h3>
+          <p class="sequence-detail-reference-authors">Jiang, F., Kumar, R.A., Jones, R.A., Patel, D.J. (1996)</p>
+          <p class="sequence-detail-reference-source">Nature 382:183-186</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/8700212/" target="_blank" rel="noopener noreferrer">PubMed: 8700212</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1038/382183a0" target="_blank" rel="noopener noreferrer">DOI: 10.1038/382183a0</a>
+          </div>
+        </article>
+      </div>
+    </div>`;
+  }
+
+  if (row.pdbName === '4L81') {
+    return `<div class="sequence-detail-reference-card">
+      <div class="sequence-detail-reference-list">
+        <article class="sequence-detail-reference-item">
+          <h3>[1] RNA-Puzzles Round III: 3D RNA structure prediction of five riboswitches and one ribozyme.</h3>
+          <p class="sequence-detail-reference-authors">Miao Z, Adamiak RW, Antczak M, Batey RT, Becka AJ, Biesiada M, Boniecki MJ, Bujnicki JM, Chen SJ, Cheng CY, Chou FC, Ferre-D'Amare AR, Das R, Dawson WK, Ding F, Dokholyan NV, Dunin-Horkawicz S, Geniesse C, Kappel K, Kladwang W, Krokhotin A, Lach GE, Major F, Mann TH, Magnus M, Pachulska-Wieczorek K, Patel DJ, Piccirilli JA, Popenda M, Purzycka KJ, Ren A, Rice GM, Santalucia J Jr, Sarzynska J, Szachniuk M, Tandon A, Trausch JJ, Tian S, Wang J, Weeks KM, Williams B 2nd, Xiao Y, Xu X, Zhang D, Zok T, Westhof E. (2017)</p>
+          <p class="sequence-detail-reference-source">RNA (New York, N.Y.) 23(5):655-672</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/28138060/" target="_blank" rel="noopener noreferrer">PMID: 28138060</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1261/rna.060368.116" target="_blank" rel="noopener noreferrer">DOI: 10.1261/rna.060368.116</a>
+          </div>
+        </article>
+
+        <article class="sequence-detail-reference-item">
+          <h3>[2] Structural basis for diversity in the SAM clan of riboswitches.</h3>
+          <p class="sequence-detail-reference-authors">Trausch, J.J., Xu, Z., Edwards, A.L., Reyes, F.E., Ross, P.E., Knight, R., Batey, R.T. (2014)</p>
+          <p class="sequence-detail-reference-source">Proceedings of the National Academy of Sciences of the United States of America 111:6624-6629</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/24753586/" target="_blank" rel="noopener noreferrer">PubMed: 24753586</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1073/pnas.1312918111" target="_blank" rel="noopener noreferrer">DOI: 10.1073/pnas.1312918111</a>
+          </div>
+        </article>
+      </div>
+    </div>`;
+  }
+
+  if (row.pdbName === '5TPY') {
+    return `<div class="sequence-detail-reference-card">
+      <div class="sequence-detail-reference-list">
+        <article class="sequence-detail-reference-item">
+          <h3>[1] Zika virus produces noncoding RNAs using a multi-pseudoknot structure that confounds a cellular exonuclease.</h3>
+          <p class="sequence-detail-reference-authors">Akiyama, B.M., Laurence, H.M., Massey, A.R., Costantino, D.A., Xie, X., Yang, Y., Shi, P.Y., Nix, J.C., Beckham, J.D., Kieft, J.S. (2016)</p>
+          <p class="sequence-detail-reference-source">Science 354:1148-1152</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/27934765/" target="_blank" rel="noopener noreferrer">PubMed: 27934765</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1126/science.aah3963" target="_blank" rel="noopener noreferrer">DOI: 10.1126/science.aah3963</a>
+          </div>
+        </article>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="sequence-detail-reference-card">
+    <p>This tertiary structure is based on the PDB entry <strong>${row.pdbName ?? ''}</strong>.</p>
+    <div class="sequence-detail-reference-links">
+      <a class="sequence-detail-reference-link" href="https://www.rcsb.org/structure/${encodeURIComponent(row.pdbName ?? '')}" target="_blank" rel="noopener noreferrer">Open PDB Entry</a>
+    </div>
+  </div>`;
+}
+
 function sequenceDetailPage() {
   const sequenceId = getSequenceIdFromHash();
   const pdbName = getPdbNameFromHash();
@@ -182,22 +422,19 @@ function sequenceDetailPage() {
       <section class="sequence-detail-panel">
         <h2>Secondary Structure</h2>
         <div class="sequence-detail-rule"></div>
-        <div class="sequence-detail-media">
-          <img
-            src="./SL5.png"
-            alt="Secondary structure diagram"
-            class="sequence-detail-image"
-          />
-        </div>
+        ${renderSequenceDetailSecondaryContent(row)}
       </section>
 
       <section class="sequence-detail-panel">
         <h2>Tertiary Structure</h2>
         <div class="sequence-detail-rule"></div>
-        <div class="sequence-detail-media">
-          <div id="sequence-detail-molstar-status" class="mini-note">Loading interactive 3D structure…</div>
-          <div id="sequence-detail-molstar" class="sequence-detail-viewer"></div>
-        </div>
+        ${renderSequenceDetailTertiaryContent(row)}
+      </section>
+
+      <section class="sequence-detail-panel">
+        <h2>Reference</h2>
+        <div class="sequence-detail-rule"></div>
+        ${renderSequenceDetailReferenceContent(row)}
       </section>
     </section>
   </main>`;
@@ -206,25 +443,74 @@ function sequenceDetailPage() {
 
 
 async function loadSequenceRows() {
-  const response = await fetch('./singlecell-viewer/dist/data/sequences.json');
-  if (!response.ok) {
-    throw new Error('Failed to load sequences.json');
-  }
-
-  const rawRows = await response.json();
-  const firstRow = rawRows[0] ?? {};
-  sequenceRows = Array.from({ length: DEMO_SEQUENCE_COUNT }, (_, index) => ({
-    id: `${firstRow['PDB Name'] ?? 'SEQ'}-${index + 1}`,
-    pdbName: '8QO5',
-    sequenceName: 'SARS-CoV-2-SL5',
-    aptamerName: 'XX',
-    category: 'Virus',
-    type: 'UCGUUGACAGGACACGAGUAACUCGUCUAUCUUCUGCAGGCUGCUUACGGUUUCGUCCGUGUUGCAGCCGAUCAUCAGCACAUCUAGGUUUCGUCCGGGUGUGACCGAAAGGUAAGAUGGAGAGCCUUGUCCCUGGUUUCAACGA',
-    chemicalProbing: 'XX',
-    article: '2024',
-    sequence: '100%',
-    confidence: 'high',
-    detailPage: firstRow.detailPage ?? '#'
+  sequenceRows = [
+    {
+      id: '8QO5-SARS-COV-2-SL5',
+      pdbName: '8QO5',
+      sequenceName: 'SARS-CoV-2-SL5',
+      aptamerName: 'XX',
+      category: 'Virus',
+      type: 'UCGUUGACAGGACACGAGUAACUCGUCUAUCUUCUGCAGGCUGCUUACGGUUUCGUCCGUGUUGCAGCCGAUCAUCAGCACAUCUAGGUUUCGUCCGGGUGUGACCGAAAGGUAAGAUGGAGAGCCUUGUCCCUGGUUUCAACGA',
+      chemicalProbing: 'XX',
+      article: '2024',
+      sequence: '100%',
+      confidence: 'high'
+    },
+    {
+      id: '5KPY-5-HTP-RNA-APTAMER',
+      pdbName: '5KPY',
+      sequenceName: '5-hydroxytryptophan RNA aptamer',
+      aptamerName: 'XX',
+      category: 'RNA',
+      type: 'GGACACUGAUGAUCGCGUGGAUAUGGCACGCAUUGAAUUGUUGGACACCGUAAAUGUCCUAACACGUGUCC',
+      chemicalProbing: 'XX',
+      article: '2017',
+      sequence: '100%',
+      confidence: 'high',
+      structureFile: 'src/assets/structures/5KPY-assembly1.cif'
+    },
+    {
+      id: '1AM0-RNA-APTAMER',
+      pdbName: '1AM0',
+      sequenceName: 'RNA APTAMER',
+      aptamerName: 'XX',
+      category: 'RNA',
+      type: 'GGGUUGGGAAGAAACUGUGGCACUUCGGUGCCAGCAACCC',
+      chemicalProbing: 'XX',
+      article: '1997',
+      sequence: '100%',
+      confidence: 'high',
+      structureFile: 'src/assets/structures/1AM0-assembly1.cif'
+    },
+    {
+      id: '4L81-SAM-I-IV-VARIANT-RIBOSWITCH-APTAMER-DOMAIN',
+      pdbName: '4L81',
+      sequenceName: 'SAM-I/IV variant riboswitch aptamer domain',
+      aptamerName: 'XX',
+      category: 'RNA',
+      type: 'GGAUCACGAGGGGGAGACCCCGGCAACCUGGGACGGACACCCAAGGUGCUCACACCGGAGACGGUGGAUCCGGCCCGAGAGGGCAACGAAGUCCGU',
+      chemicalProbing: 'XX',
+      article: '2014',
+      sequence: '100%',
+      confidence: 'high',
+      structureFile: 'src/assets/structures/4L81-assembly1.cif'
+    },
+    {
+      id: '5TPY-RNA-71-MER',
+      pdbName: '5TPY',
+      sequenceName: 'RNA (71-MER)',
+      aptamerName: 'XX',
+      category: 'RNA',
+      type: 'GGGUCAGGCCGGCGAAAGUCGCCACAGUUUGGGGAAAGCUGUGCAGCCUGUAACCCCCCCACGAAAGUGGG',
+      chemicalProbing: 'XX',
+      article: '2016',
+      sequence: '100%',
+      confidence: 'high',
+      structureFile: 'src/assets/structures/5TPY-assembly1.cif'
+    }
+  ].map((row) => ({
+    ...row,
+    detailPage: `#sequence-detail?sequenceId=${encodeURIComponent(row.id)}`
   }));
 }
 
@@ -242,7 +528,7 @@ function downloadSequencesPage() {
           ${selectedSequenceIds.has(row.id) ? 'checked' : ''}
         />
       </td>
-      <td><a href="#sequence-detail?pdbName=${encodeURIComponent(row.pdbName ?? '')}" class="sequence-link">${row.sequenceName ?? ''}</a></td>
+      <td><a href="#sequence-detail?sequenceId=${encodeURIComponent(row.id ?? '')}" class="sequence-link">${row.sequenceName ?? ''}</a></td>
       <td>${row.aptamerName ?? ''}</td>
       <td>${row.article ?? ''}</td>
       <td>${row.category ?? ''}</td>
@@ -617,6 +903,7 @@ function render(options = {}) {
   initSecondaryStructureModule();
   initMolstarModule();
   initSequenceDetailMolstar();
+  initSequenceDetailSecondaryHeatmap();
   initAnimatedStats();
 
 const downloadToggle = document.getElementById('download-menu-toggle');

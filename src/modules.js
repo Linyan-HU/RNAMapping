@@ -537,7 +537,7 @@ export async function initMolstarModule() {
 
   let viewer = null;
   const basePath = getGithubPagesBasePath();
-  const localPdbUrl = `${basePath}/pdbfiles/8k7w_RNA+only.pdb`;
+  const localPdbUrl = `${basePath}/src/assets/pdb/8k7w_RNA_only.pdb`;
 
   function renderLocalPdbTextFallback() {
     container.innerHTML = `<div class="mini-note">Mol* script unavailable. Local PDB path:</div><pre class="pdb-fallback">${localPdbUrl}</pre>`;
@@ -568,7 +568,7 @@ export async function initMolstarModule() {
     try {
       await loadMolstarAssets();
       await loadStructureWithViewer(pdbId);
-      status.textContent = pdbId === '8K7W' ? 'Loaded Mol* in #myViewer1 from /pdbfiles/8k7w_RNA+only.pdb' : `Loaded Mol* in #myViewer1 for ${pdbId}`;
+      status.textContent = pdbId === '8K7W' ? 'Loaded Mol* in #myViewer1 from /src/assets/pdb/8k7w_RNA_only.pdb' : `Loaded Mol* in #myViewer1 for ${pdbId}`;
     } catch (_e) {
       status.textContent = 'Mol* CDN blocked; cannot instantiate viewer. Local path is ready.';
       renderLocalPdbTextFallback();
@@ -584,22 +584,256 @@ export async function initSequenceDetailMolstar() {
   const status = document.getElementById('sequence-detail-molstar-status');
   if (!container || !status) return;
 
-  const basePath = getGithubPagesBasePath();
-  const localCifUrl = `${basePath}/8QO5-assembly1.cif`;
+  const structureUrl = container.dataset.structureUrl;
+  const structureFormat = container.dataset.structureFormat || 'cif';
+  const structureLabel = container.dataset.structureLabel || 'local structure';
+  if (!structureUrl) return;
 
   try {
     await loadMolstarAssets();
     const viewer = new window.PDBeMolstarPlugin();
     viewer.render(container, {
-      customData: { url: localCifUrl, format: 'cif' },
+      customData: { url: structureUrl, format: structureFormat },
       expanded: false,
       hideControls: true,
       bgColor: { r: 255, g: 255, b: 255 }
     });
 
-    status.textContent = 'Interactive Mol* view loaded from local 8QO5 assembly file.';
+    status.textContent = `Interactive Mol* view loaded from ${structureLabel}.`;
   } catch (_e) {
     status.textContent = '3D viewer unavailable right now.';
+  }
+}
+
+function parseRdatMatrix(text) {
+  const lines = text.split(/\r?\n/);
+  const rowLabels = [];
+  const reactivityRows = [];
+  const errorRows = [];
+  let colLabels = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (!line) continue;
+
+    if (line.startsWith('ANNOTATION_DATA:')) {
+      const [, indexPart = ''] = line.split(':');
+      const cols = line.split('\t').filter(Boolean);
+      const mutationCol = cols.find((entry) => entry.startsWith('mutation:'));
+      const index = Number(indexPart.split(/\s+/)[0]);
+      rowLabels[index - 1] = mutationCol ? mutationCol.replace('mutation:', '') : `Row ${index}`;
+    } else if (line.startsWith('SEQPOS')) {
+      colLabels = line.split('\t').slice(1).filter(Boolean);
+    } else if (line.startsWith('REACTIVITY_ERROR:')) {
+      const [, indexPart = ''] = line.split(':');
+      const index = Number(indexPart.split(/\s+/)[0]);
+      errorRows[index - 1] = line
+        .split('\t')
+        .slice(1)
+        .filter(Boolean)
+        .map((value) => Number.parseFloat(value));
+    } else if (line.startsWith('REACTIVITY:')) {
+      const [, indexPart = ''] = line.split(':');
+      const index = Number(indexPart.split(/\s+/)[0]);
+      reactivityRows[index - 1] = line
+        .split('\t')
+        .slice(1)
+        .filter(Boolean)
+        .map((value) => Number.parseFloat(value));
+    }
+  }
+
+  return { rowLabels, colLabels, reactivityRows, errorRows };
+}
+
+function formatHeatmapLabel(label) {
+  if (!label) return '';
+  if (label === 'WT') return 'WT';
+  const match = label.match(/^([AUGC])(\d+)([AUGC])$/);
+  return match ? `${match[1]}${match[2]}${match[3]}` : label;
+}
+
+export async function initSequenceDetailSecondaryHeatmap() {
+  const host = document.getElementById('sequence-secondary-heatmap');
+  const status = document.getElementById('sequence-secondary-heatmap-status');
+  if (!host || !status) return;
+
+  const rdatUrl = host.dataset.rdatUrl;
+  if (!rdatUrl) return;
+
+  try {
+    const response = await fetch(rdatUrl);
+    if (!response.ok) throw new Error('Failed to load RDAT');
+    const text = await response.text();
+    const parsed = parseRdatMatrix(text);
+    const labelGap = 10;
+    const leftLabelBand = 28;
+    const rightLabelBand = 64;
+    const topLabelBand = 58;
+    const bottomLabelBand = 28;
+    const rows = parsed.reactivityRows.length;
+    const cols = parsed.colLabels.length;
+    const hostWidth = Math.floor(host.getBoundingClientRect().width || host.clientWidth || 0);
+    const availableWidth = Math.min(760, Math.max(620, hostWidth - 28));
+    const cellSize = Math.min(12, Math.max(8, Math.floor((availableWidth - leftLabelBand - rightLabelBand) / cols)));
+    const width = leftLabelBand + cols * cellSize + rightLabelBand;
+    const height = topLabelBand + rows * cellSize + bottomLabelBand;
+
+    host.innerHTML = `
+      <div class="sequence-secondary-heatmap-scroll">
+        <div class="sequence-secondary-heatmap-stage">
+          <canvas class="sequence-secondary-heatmap-canvas"></canvas>
+          <div class="sequence-secondary-heatmap-tooltip" hidden></div>
+        </div>
+      </div>
+    `;
+
+    const canvas = host.querySelector('canvas');
+    const tooltip = host.querySelector('.sequence-secondary-heatmap-tooltip');
+    const stage = host.querySelector('.sequence-secondary-heatmap-stage');
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !tooltip || !stage) throw new Error('Canvas unavailable');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(dpr, dpr);
+
+    const flatValues = parsed.reactivityRows.flat().filter((value) => Number.isFinite(value));
+    const maxValue = Math.max(...flatValues, 1);
+    const font = `${Math.max(10, cellSize - 2)}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+    const monoFont = `${Math.max(10, cellSize - 2)}px Menlo, Consolas, monospace`;
+
+    function paint(activeCell = null) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      for (let row = 0; row < rows; row += 1) {
+        const y = topLabelBand + row * cellSize;
+        ctx.fillStyle = '#69d9ca';
+        ctx.font = `italic ${Math.max(10, cellSize - 1)}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(row + 1), leftLabelBand - labelGap, y + cellSize / 2);
+
+        ctx.fillStyle = '#101010';
+        ctx.font = font;
+        ctx.textAlign = 'left';
+        ctx.fillText(formatHeatmapLabel(parsed.rowLabels[row]), leftLabelBand + cols * cellSize + labelGap, y + cellSize / 2);
+
+        for (let col = 0; col < cols; col += 1) {
+          const x = leftLabelBand + col * cellSize;
+          const value = parsed.reactivityRows[row]?.[col] ?? 0;
+          const normalized = Math.max(0, Math.min(1, value / maxValue));
+          const shade = Math.round(255 - normalized * 255);
+          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+          ctx.fillRect(x, y, cellSize, cellSize);
+          ctx.strokeStyle = '#202020';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+        }
+      }
+
+      for (let col = 0; col < cols; col += 1) {
+        const x = leftLabelBand + col * cellSize + cellSize / 2;
+        const label = parsed.colLabels[col];
+        const base = label.match(/^([AUGC])(\d+)$/);
+        const nt = base?.[1] ?? '';
+        const pos = base?.[2] ?? label;
+
+        ctx.save();
+        ctx.translate(x, topLabelBand - labelGap);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = monoFont;
+        ctx.fillStyle = nt === 'A' ? '#ff8c42' : nt === 'U' ? '#4b9cff' : nt === 'G' ? '#ff5a36' : '#4dbb63';
+        ctx.fillText(nt, 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(x, topLabelBand - labelGap - 16);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = font;
+        ctx.fillStyle = '#101010';
+        ctx.fillText(pos, 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(x, height - bottomLabelBand + labelGap);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = `italic ${Math.max(9, cellSize - 3)}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillStyle = '#7fe5d9';
+        ctx.fillText(String(col + 1), 0, 0);
+        ctx.restore();
+      }
+
+      if (activeCell) {
+        const { row, col } = activeCell;
+        const x = leftLabelBand + col * cellSize;
+        const y = topLabelBand + row * cellSize;
+        ctx.strokeStyle = '#b892ff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        ctx.strokeStyle = 'rgba(184, 146, 255, 0.65)';
+        ctx.beginPath();
+        ctx.moveTo(leftLabelBand, y + cellSize / 2);
+        ctx.lineTo(leftLabelBand + cols * cellSize, y + cellSize / 2);
+        ctx.moveTo(x + cellSize / 2, topLabelBand);
+        ctx.lineTo(x + cellSize / 2, topLabelBand + rows * cellSize);
+        ctx.stroke();
+      }
+    }
+
+    paint();
+
+    stage.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const col = Math.floor((x - leftLabelBand) / cellSize);
+      const row = Math.floor((y - topLabelBand) / cellSize);
+
+      if (col < 0 || col >= cols || row < 0 || row >= rows) {
+        tooltip.hidden = true;
+        paint();
+        return;
+      }
+
+      const activeCell = { row, col };
+      paint(activeCell);
+
+      const rowLabel = formatHeatmapLabel(parsed.rowLabels[row]);
+      const colLabel = formatHeatmapLabel(parsed.colLabels[col]);
+      const base = colLabel.match(/^([AUGC])\d+$/)?.[1] ?? '';
+      const value = parsed.reactivityRows[row]?.[col];
+      const error = parsed.errorRows[row]?.[col];
+
+      tooltip.innerHTML = `
+        <div><span>ROW</span><strong>${row + 1}: ${rowLabel}</strong></div>
+        <div><span>COLUMN</span><strong>${col + 1}: ${colLabel}</strong></div>
+        <div><span>SEQUENCE</span><strong>${base || '—'}</strong></div>
+        <div><span>REACTIVITY</span><strong>${Number.isFinite(value) ? value.toFixed(3) : '—'}</strong></div>
+        <div><span>ERROR</span><strong>${Number.isFinite(error) ? error.toFixed(3) : '—'}</strong></div>
+      `;
+      tooltip.hidden = false;
+      tooltip.style.left = `${Math.min(x + 22, width - 210)}px`;
+      tooltip.style.top = `${Math.min(y + 22, height - 150)}px`;
+    });
+
+    stage.addEventListener('mouseleave', () => {
+      tooltip.hidden = true;
+      paint();
+    });
+
+    status.textContent = 'Hover any cell to inspect mutation, position, reactivity, and error.';
+  } catch (_error) {
+    status.textContent = 'Heatmap data could not be loaded.';
   }
 }
 
