@@ -11,6 +11,7 @@ import {
   initAptamerMultiSelect,
   initSecondaryStructureModule,
   initMolstarModule,
+  initHomeStructureShowcase,
   initSequenceDetailMolstar,
   initSequenceDetailSecondaryHeatmap
 } from './modules.js';
@@ -138,7 +139,47 @@ function getFilteredSequenceRows() {
   );
 }
 
+function renderColoredSequence(sequence) {
+  return String(sequence ?? '')
+    .split('')
+    .map((char) => {
+      const upper = char.toUpperCase();
+      if (!'AUGCT'.includes(upper)) return char;
+      const cls = upper === 'T' ? 'nucleotide-u' : `nucleotide-${upper.toLowerCase()}`;
+      const display = upper === 'T' ? 'U' : char;
+      return `<span class="sequence-nucleotide ${cls}">${display}</span>`;
+    })
+    .join('');
+}
+
 function renderSequenceDetailSecondaryContent(row) {
+  if (row.pdbName === '8QO5') {
+    return `<div class="sequence-secondary-layout">
+      <div class="sequence-secondary-top">
+        <div class="sequence-secondary-block">
+          <span class="sequence-secondary-label">Sequence</span>
+          <code class="sequence-secondary-code">${row.type ?? ''}</code>
+        </div>
+        <div class="sequence-secondary-block">
+          <span class="sequence-secondary-label">Structure</span>
+          <code class="sequence-secondary-code">${row.structureText ?? ''}</code>
+        </div>
+      </div>
+
+      <section class="sequence-secondary-card sequence-secondary-figure-card">
+        <div class="sequence-secondary-card-header">
+          <h3>Secondary Structure Diagram</h3>
+          <span class="mini-note">Annotated structure for the conserved SL5 region.</span>
+        </div>
+        <img
+          class="sequence-secondary-image"
+          src="./src/assets/references/8QO5-secondary-structure.png"
+          alt="Secondary structure diagram for SARS-CoV-2-SL5"
+        />
+      </section>
+    </div>`;
+  }
+
   if (row.pdbName !== '5KPY' && row.pdbName !== '1AM0' && row.pdbName !== '4L81' && row.pdbName !== '5TPY') {
     return `<div class="sequence-detail-placeholder">
       <p>Secondary structure content will be added here.</p>
@@ -276,6 +317,22 @@ function renderSequenceDetailTertiaryContent(row) {
 }
 
 function renderSequenceDetailReferenceContent(row) {
+  if (row.pdbName === '8QO5') {
+    return `<div class="sequence-detail-reference-card">
+      <div class="sequence-detail-reference-list">
+        <article class="sequence-detail-reference-item">
+          <h3>[1] Conserved structures and dynamics in 5'-proximal regions of Betacoronavirus RNA genomes.</h3>
+          <p class="sequence-detail-reference-authors">de Moura, T.R., Purta, E., Bernat, A., Martin-Cuevas, E.M., Kurkowska, M., Baulin, E.F., Mukherjee, S., Nowak, J., Biela, A.P., Rawski, M., Glatt, S., Moreno-Herrero, F., Bujnicki, J.M. (2024)</p>
+          <p class="sequence-detail-reference-source">Nucleic Acids Research 52:3419-3432</p>
+          <div class="sequence-detail-reference-links">
+            <a class="sequence-detail-reference-link" href="https://pubmed.ncbi.nlm.nih.gov/38426934/" target="_blank" rel="noopener noreferrer">PubMed: 38426934</a>
+            <a class="sequence-detail-reference-link" href="https://doi.org/10.1093/nar/gkae144" target="_blank" rel="noopener noreferrer">DOI: 10.1093/nar/gkae144</a>
+          </div>
+        </article>
+      </div>
+    </div>`;
+  }
+
   if (row.pdbName === '5KPY') {
     return `<div class="sequence-detail-reference-card">
       <div class="sequence-detail-reference-list">
@@ -414,8 +471,8 @@ function sequenceDetailPage() {
       <section class="sequence-detail-panel">
         <h2>Primary Sequence</h2>
         <div class="sequence-detail-rule"></div>
-        <div class="sequence-detail-placeholder">
-          <p>Primary sequence content will be added here.</p>
+        <div class="sequence-secondary-block">
+          <code class="sequence-secondary-code sequence-primary-code">${renderColoredSequence(row.type ?? '')}</code>
         </div>
       </section>
 
@@ -448,19 +505,21 @@ async function loadSequenceRows() {
       id: '8QO5-SARS-COV-2-SL5',
       pdbName: '8QO5',
       sequenceName: 'SARS-CoV-2-SL5',
-      aptamerName: 'XX',
+      aptamerName: "Conserved Structures and Dynamics in 5'-Proximal Regions of Betacoronavirus RNA Genomes",
       category: 'Virus',
-      type: 'UCGUUGACAGGACACGAGUAACUCGUCUAUCUUCUGCAGGCUGCUUACGGUUUCGUCCGUGUUGCAGCCGAUCAUCAGCACAUCUAGGUUUCGUCCGGGUGUGACCGAAAGGUAAGAUGGAGAGCCUUGUCCCUGGUUUCAACGA',
+      type: 'AUUAAAGGUUUAUACCUUCCCAGGUAACAAACCAACCAACUUUCGAUCUCUUGUAGAUCUGUUCUCUAAACGAACUUUAAAAUCUGUGUGGCUGUCACUCGGCUGCAUGCUUAGUGCACUCACGCAGUAUAAUUAAUAACUAAUUACUGUCGUUGACAGGACACGAGUAACUCGUCUAUCUUCUGCAGGCUGCUUACGGUUUCGUCCGUGUUGCAGCCGAUCAUCAGCACAUCUAGGUUUCGUCCGGGUGUGACCGAAAGGUAAGAUGGAGAGCCUUGUCCCUGGUUUCAACGAGAAAAC',
       chemicalProbing: 'XX',
       article: '2024',
       sequence: '100%',
-      confidence: 'high'
+      confidence: 'high',
+      structureFile: 'src/assets/structures/8QO5-assembly1.cif',
+      structureText: '. . . . . . ( ( ( ( ( . ( ( ( ( ( . . . . ) ) ) ) ) . . ) ) ) ) ) . . . . . . . . . . . ( ( ( ( ( . . . . . ) ) ) ) ) . ( ( ( ( . . . . . . . ) ) ) ) . . . . . . . . ( ( ( ( ( ( ( ( . ( ( . ( ( ( ( . ( ( ( . . . . . ) ) ) . ) ) ) ) ) ) . ) ) ) ) ) ) ) ) . . ( ( ( ( ( ( . . . . . ) ) ) ) ) ) . . . ( ( ( ( ( ( ( ( ( ( ( . . ( ( ( ( ( . . . ( ( ( . ( ( ( ( ( ( ( ( ( ( ( . . ( ( ( ( ( ( . ( ( ( ( ( . . . . . . ) ) ) ) ) . . ) ) ) ) ) ) . . . . . . ) ) ) ( ( ( ( ( ( ( . ( ( . . . . . . ) ) ) ) ) ) ) ) ) ( ( ( . . . . ) ) ) ) ) ) ) ) ) ) ) ) ) ) . ) ) ) ) ) . ) ) ) ) . . . ) ) ) ) ) ) ) . . . . . .',
     },
     {
       id: '5KPY-5-HTP-RNA-APTAMER',
       pdbName: '5KPY',
       sequenceName: '5-hydroxytryptophan RNA aptamer',
-      aptamerName: 'XX',
+      aptamerName: 'Structure of a 5-hydroxytryptophan aptamer',
       category: 'RNA',
       type: 'GGACACUGAUGAUCGCGUGGAUAUGGCACGCAUUGAAUUGUUGGACACCGUAAAUGUCCUAACACGUGUCC',
       chemicalProbing: 'XX',
@@ -473,7 +532,7 @@ async function loadSequenceRows() {
       id: '1AM0-RNA-APTAMER',
       pdbName: '1AM0',
       sequenceName: 'RNA APTAMER',
-      aptamerName: 'XX',
+      aptamerName: 'AMP RNA APTAMER COMPLEX, NMR, 8 STRUCTURES',
       category: 'RNA',
       type: 'GGGUUGGGAAGAAACUGUGGCACUUCGGUGCCAGCAACCC',
       chemicalProbing: 'XX',
@@ -486,7 +545,7 @@ async function loadSequenceRows() {
       id: '4L81-SAM-I-IV-VARIANT-RIBOSWITCH-APTAMER-DOMAIN',
       pdbName: '4L81',
       sequenceName: 'SAM-I/IV variant riboswitch aptamer domain',
-      aptamerName: 'XX',
+      aptamerName: 'Structure of the SAM-I/IV riboswitch (env87(deltaU92, deltaG93))',
       category: 'RNA',
       type: 'GGAUCACGAGGGGGAGACCCCGGCAACCUGGGACGGACACCCAAGGUGCUCACACCGGAGACGGUGGAUCCGGCCCGAGAGGGCAACGAAGUCCGU',
       chemicalProbing: 'XX',
@@ -499,7 +558,7 @@ async function loadSequenceRows() {
       id: '5TPY-RNA-71-MER',
       pdbName: '5TPY',
       sequenceName: 'RNA (71-MER)',
-      aptamerName: 'XX',
+      aptamerName: 'Crystal structure of an exonuclease resistant RNA from Zika virus',
       category: 'RNA',
       type: 'GGGUCAGGCCGGCGAAAGUCGCCACAGUUUGGGGAAAGCUGUGCAGCCUGUAACCCCCCCACGAAAGUGGG',
       chemicalProbing: 'XX',
@@ -579,7 +638,7 @@ function downloadSequencesPage() {
           <tr>
             <th>Select</th>
             <th>Name</th>
-            <th>Description</th>
+            <th>Description(PDB)</th>
             <th>Discovery Year</th>
             <th>Category</th>
             <th>Sequence</th>
@@ -690,56 +749,199 @@ function renderFooter() {
   </footer>`;
 }
 
+function buildHomeDashboardData() {
+  const rows = sequenceRows;
+  const yearCounts = new Map();
+  const categoryCounts = new Map();
+
+  rows.forEach((row) => {
+    const year = String(row.article ?? '');
+    const category = String(row.category ?? 'Unknown');
+    yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
+    categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+  });
+
+  const yearEntries = [...yearCounts.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
+  const categoryEntries = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1]);
+  const totalSequenceLength = rows.reduce((sum, row) => sum + String(row.type ?? '').length, 0);
+  const avgLength = rows.length ? Math.round(totalSequenceLength / rows.length) : 0;
+  const yearValues = yearEntries.map(([, count]) => count);
+  const maxYearCount = Math.max(...yearValues, 1);
+  const categoryTotal = Math.max(categoryEntries.reduce((sum, [, count]) => sum + count, 0), 1);
+  const donutPalette = ['#4F86C6', '#F4A261', '#7BC08E', '#C08497', '#E9C46A'];
+  const barPalette = ['#5AA9E6', '#7BC08E', '#F4A261', '#C08497', '#74C69D'];
+
+  let cursor = 0;
+  const donutStops = categoryEntries.map(([, count], index) => {
+    const start = (cursor / categoryTotal) * 100;
+    cursor += count;
+    const end = (cursor / categoryTotal) * 100;
+    const color = donutPalette[index % donutPalette.length];
+    return `${color} ${start}% ${end}%`;
+  });
+
+  const years = rows.map((row) => Number(row.article)).filter((value) => Number.isFinite(value));
+  const minYear = years.length ? Math.min(...years) : '—';
+  const maxYear = years.length ? Math.max(...years) : '—';
+  const highConfidenceCount = rows.filter((row) => String(row.confidence).toLowerCase() === 'high').length;
+
+  return {
+    rows,
+    yearEntries,
+    categoryEntries,
+    maxYearCount,
+    avgLength,
+    minYear,
+    maxYear,
+    highConfidenceCount,
+    barPalette,
+    donutPalette,
+    donutStyle: donutStops.length
+      ? `background: conic-gradient(${donutStops.join(', ')});`
+      : 'background: #d7ecde;'
+  };
+}
+
 function homePage() {
-  const activeThemeLabel = themeTokens[theme]?.label ?? 'Blue';
+  const dashboard = buildHomeDashboardData();
   return `<main class="page-home">
     ${renderGlobalSearch()}
     ${subNav()}
 
-    <section class="hero card">
-      <div>
-        <h1>RNA structure mapping</h1>
-        <p>A database enabling systematic mapping between RNA secondary structure elements and three-dimensional RNA architecture.</p>
-        <p><strong>Active visual theme:</strong> ${activeThemeLabel} (${mode})</p>
-        <div class="actions"><button data-route="browse">Explore Datasets</button><button class="ghost" data-route="detail">Open Detail Example</button></div>
+    <section class="card dashboard-home">
+      <h1>Data Statistics Dashboard</h1>
+      <div class="dashboard-home-rule"></div>
+
+      <div class="dashboard-home-panels">
+        <article class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h2>Year Distribution</h2>
+            <span class="dashboard-panel-note">Based on current sequence records</span>
+          </div>
+          <div class="dashboard-year-chart">
+            ${dashboard.yearEntries.map(([year, count]) => `
+              <div class="dashboard-year-bar-wrap">
+                <div class="dashboard-year-bar-track">
+                  <div class="dashboard-year-bar" style="height:${Math.max((count / dashboard.maxYearCount) * 180, 28)}px; background:${dashboard.barPalette[(Number(year) || 0) % dashboard.barPalette.length]};"></div>
+                </div>
+                <strong>${count}</strong>
+                <span>${year}</span>
+              </div>
+            `).join('')}
+          </div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h2>Category Distribution</h2>
+            <span class="dashboard-panel-note">Current sequence categories</span>
+          </div>
+          <div class="dashboard-category-layout">
+            <div class="dashboard-donut-shell">
+              <div class="dashboard-donut" style="${dashboard.donutStyle}">
+                <div class="dashboard-donut-hole"></div>
+              </div>
+            </div>
+            <div class="dashboard-category-list">
+              ${dashboard.categoryEntries.map(([category, count], index) => `
+                <div class="dashboard-category-item">
+                  <span class="dashboard-category-swatch" style="background:${dashboard.donutPalette[index % dashboard.donutPalette.length]}"></span>
+                  <span>${category}</span>
+                  <strong>${count}</strong>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </article>
       </div>
-      <div class="hero-metrics">
-        ${portalMetrics.map((m) => `<div><strong data-animate-number="true" data-target="${parseMetricValue(m.value)}" data-original="${m.value}">0</strong><span>${m.label}</span></div>`).join('')}
+
+      <article class="dashboard-table-card">
+        <div class="dashboard-panel-header">
+          <h2>Data Details</h2>
+          <span class="dashboard-panel-note">Showing ${dashboard.rows.length} records</span>
+        </div>
+        <div class="download-table-wrap">
+          <table class="structure-table download-table dashboard-home-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Name</th>
+                <th>PDB ID</th>
+                <th>Discovery Year</th>
+                <th>Category</th>
+                <th>Sequence</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dashboard.rows.map((row, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td><a href="#sequence-detail?sequenceId=${encodeURIComponent(row.id ?? '')}" class="sequence-link">${row.sequenceName ?? ''}</a></td>
+                  <td><a href="https://www.rcsb.org/structure/${encodeURIComponent(row.pdbName ?? '')}" class="sequence-link" target="_blank" rel="noopener noreferrer">${row.pdbName ?? ''}</a></td>
+                  <td>${row.article ?? ''}</td>
+                  <td>${row.category ?? ''}</td>
+                  <td><span class="sequence-preview" title="${row.type ?? ''}">${row.type ? `${row.type.slice(0, 18)}...` : ''}</span></td>
+                  <td>${row.confidence ?? ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <div class="dashboard-summary-cards">
+        <article class="dashboard-summary-card">
+          <span>Total Records</span>
+          <strong>${dashboard.rows.length}</strong>
+        </article>
+        <article class="dashboard-summary-card">
+          <span>Average Length</span>
+          <strong>${dashboard.avgLength} nt</strong>
+        </article>
+        <article class="dashboard-summary-card">
+          <span>Year Range</span>
+          <strong>${dashboard.minYear}–${dashboard.maxYear}</strong>
+        </article>
+        <article class="dashboard-summary-card">
+          <span>High Confidence</span>
+          <strong>${dashboard.highConfidenceCount}</strong>
+        </article>
       </div>
-    </section>
 
-    <section class="stats-grid">
-      ${dataTypeCards.map((item) => `<article class="card"><h3>${item.name}</h3><p>${item.desc}</p><strong>${item.count}</strong></article>`).join('')}
-    </section>
-
-    <section class="card">
-      <h2>Experiment Overview</h2>
-      <div class="stats-grid compact">
-        ${stageDiseaseCards.map((item) => `<article class="mini-card"><strong>${item.name}</strong><span>${item.count}</span></article>`).join('')}
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Data Statistics Dashboard</h2>
-      <ul>
-        ${siteSummaries.map((summary) => `<li><strong>${summary.site}</strong>: ${summary.scope} (${summary.records.toLocaleString()} records)</li>`).join('')}
-      </ul>
-    </section>
-
-    ${renderVisualizationShowcase()}
-
-    <section class="card">
-      <h2>Highlighted records</h2>
-      <ul>
-        ${featuredRecords.map((record) => `<li>${record.id}: ${record.title} (confidence: ${record.confidence})</li>`).join('')}
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Recent publications</h2>
-      <ul>
-        ${recentPublications.map((paper) => `<li>${paper.year} — ${paper.title} (${paper.doi})</li>`).join('')}
-      </ul>
+      <article class="dashboard-structure-card">
+        <div class="dashboard-panel-header">
+          <h2>3D Structure Gallery</h2>
+          <span class="dashboard-panel-note">Browse available tertiary structures from the current database</span>
+        </div>
+        <div class="dashboard-structure-actions">
+          ${dashboard.rows
+            .filter((row) => row.structureFile)
+            .map((row, index) => `
+              <button
+                type="button"
+                class="dashboard-structure-chip ${index === 0 ? 'active' : ''}"
+                data-home-structure-url="./${row.structureFile}"
+                data-home-structure-label="${row.pdbName ?? ''}"
+                data-home-structure-name="${row.sequenceName ?? ''}"
+              >
+                ${row.pdbName ?? ''}
+              </button>
+            `).join('')}
+        </div>
+        <div id="home-structure-status" class="mini-note">Loading interactive 3D structure…</div>
+        <div class="dashboard-structure-meta" id="home-structure-meta">
+          <strong>${dashboard.rows.find((row) => row.structureFile)?.sequenceName ?? ''}</strong>
+          <span>${dashboard.rows.find((row) => row.structureFile)?.pdbName ?? ''}</span>
+        </div>
+        <div
+          id="home-structure-viewer"
+          class="dashboard-structure-viewer"
+          data-structure-url="./${dashboard.rows.find((row) => row.structureFile)?.structureFile ?? ''}"
+          data-structure-format="cif"
+          data-structure-label="${dashboard.rows.find((row) => row.structureFile)?.pdbName ?? ''}"
+        ></div>
+      </article>
     </section>
   </main>`;
 }
@@ -902,6 +1104,7 @@ function render(options = {}) {
   initAptamerMultiSelect();
   initSecondaryStructureModule();
   initMolstarModule();
+  initHomeStructureShowcase();
   initSequenceDetailMolstar();
   initSequenceDetailSecondaryHeatmap();
   initAnimatedStats();

@@ -605,6 +605,62 @@ export async function initSequenceDetailMolstar() {
   }
 }
 
+export async function initHomeStructureShowcase() {
+  const container = document.getElementById('home-structure-viewer');
+  const status = document.getElementById('home-structure-status');
+  const meta = document.getElementById('home-structure-meta');
+  const chips = Array.from(document.querySelectorAll('.dashboard-structure-chip'));
+  if (!container || !status || !chips.length) return;
+
+  let viewer = null;
+
+  async function loadStructure(url, label, name) {
+    status.textContent = `Loading ${label}…`;
+
+    try {
+      await loadMolstarAssets();
+
+      if (!viewer) {
+        viewer = new window.PDBeMolstarPlugin();
+        viewer.render(container, {
+          customData: { url, format: 'cif' },
+          expanded: false,
+          hideControls: true,
+          bgColor: { r: 255, g: 255, b: 255 }
+        });
+      } else {
+        viewer.visual.update({ customData: { url, format: 'cif' } }, true);
+      }
+
+      if (meta) {
+        meta.innerHTML = `<strong>${name}</strong><span>${label}</span>`;
+      }
+      status.textContent = `Interactive Mol* view loaded from ${label}.`;
+    } catch (_e) {
+      status.textContent = '3D viewer unavailable right now.';
+    }
+  }
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', async () => {
+      chips.forEach((node) => node.classList.remove('active'));
+      chip.classList.add('active');
+      await loadStructure(
+        chip.dataset.homeStructureUrl,
+        chip.dataset.homeStructureLabel,
+        chip.dataset.homeStructureName
+      );
+    });
+  });
+
+  const first = chips[0];
+  await loadStructure(
+    first.dataset.homeStructureUrl,
+    first.dataset.homeStructureLabel,
+    first.dataset.homeStructureName
+  );
+}
+
 function parseRdatMatrix(text) {
   const lines = text.split(/\r?\n/);
   const rowLabels = [];
