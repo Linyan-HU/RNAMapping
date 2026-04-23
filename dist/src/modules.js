@@ -989,6 +989,35 @@ export async function initSequenceDetailSecondaryHeatmap() {
   }
 }
 
+export async function initSequenceDetailForna() {
+  const host = document.getElementById('sequence-detail-forna');
+  const status = document.getElementById('sequence-detail-forna-status');
+  if (!host || !status) return;
+
+  const sequence = (host.dataset.sequence || '').replace(/\s+/g, '');
+  const structure = (host.dataset.structure || '').replace(/\s+/g, '');
+  if (!sequence || !structure) {
+    status.textContent = 'Forna source data will be added.';
+    return;
+  }
+
+  try {
+    await loadFornaAssets();
+    host.innerHTML = '';
+    const container = new window.fornac.FornaContainer('#sequence-detail-forna', {
+      applyForce: 1,
+      editable: 'false',
+      initialSize: [760, 360]
+    });
+
+    container.addRNA(structure, { sequence, structure });
+    status.textContent = 'Forna secondary structure loaded.';
+  } catch (_e) {
+    status.textContent = 'Forna failed to load (remote scripts blocked).';
+    host.innerHTML = '<div class="sequence-detail-forna-fallback">Forna viewer unavailable.</div>';
+  }
+}
+
 export function downloadRowsAsCsv(rows, filename = 'sequences.csv') {
   if (!rows || !rows.length) return;
 

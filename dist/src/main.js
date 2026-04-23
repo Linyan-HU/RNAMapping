@@ -13,6 +13,7 @@ import {
   initMolstarModule,
   initHomeStructureShowcase,
   initSequenceDetailMolstar,
+  initSequenceDetailForna,
   initSequenceDetailSecondaryHeatmap
 } from './modules.js';
 import {
@@ -156,6 +157,42 @@ function renderColoredSequence(sequence) {
     .join('');
 }
 
+function renderSequenceDetailTimeline() {
+  const items = ['2004', '2009', '2013']
+    .map((year) => `<article class="sequence-detail-timeline-item">
+      <time>${year}</time>
+      <div class="sequence-detail-timeline-card">
+        <p>xxx</p>
+      </div>
+    </article>`)
+    .join('');
+
+  return `<section class="sequence-detail-panel sequence-detail-timeline-panel">
+    <h2>Timeline</h2>
+    <div class="sequence-detail-timeline">
+      ${items}
+    </div>
+  </section>`;
+}
+
+function renderSequenceDetailFornaPanel(row, structureText) {
+  return `<section class="sequence-secondary-card sequence-secondary-forna-card">
+    <div class="sequence-secondary-card-header">
+      <h3>Forna Secondary Structure</h3>
+      <span id="sequence-detail-forna-status" class="mini-note">Loading Forna viewer…</span>
+    </div>
+    <div class="sequence-detail-forna-frame">
+      <div
+        id="sequence-detail-forna"
+        class="sequence-detail-forna-host"
+        data-sequence="${row.type ?? ''}"
+        data-structure="${structureText ?? ''}"
+        aria-label="Forna secondary structure viewer"
+      ></div>
+    </div>
+  </section>`;
+}
+
 function renderSequenceDetailSecondaryContent(row) {
   if (row.pdbName === '8QO5') {
     return `<div class="sequence-secondary-layout">
@@ -181,6 +218,8 @@ function renderSequenceDetailSecondaryContent(row) {
           alt="Secondary structure diagram for SARS-CoV-2-SL5"
         />
       </section>
+
+      ${renderSequenceDetailFornaPanel(row, row.structureText ?? '')}
     </div>`;
   }
 
@@ -279,6 +318,8 @@ function renderSequenceDetailSecondaryContent(row) {
           data-rdat-url="${rdatUrl}"
         ></div>
       </section>
+
+      ${renderSequenceDetailFornaPanel(row, structureText)}
       </div>
 
       <aside class="sequence-secondary-side">
@@ -509,22 +550,35 @@ function sequenceDetailPage() {
   return `<main class="page-sequence-detail">
     ${renderGlobalSearch()}
     ${subNav()}
-    <section class="card sequence-detail-card">
+    <section class="sequence-detail-card">
       <div class="sequence-detail-header">
-        <h1>${row.sequenceName ?? ''}</h1>
+        <a class="sequence-detail-back" href="#download-sequences">Back to sequence list</a>
+        <div class="sequence-detail-title-row">
+          <div>
+            <p class="sequence-detail-kicker">${row.category ?? 'RNA'} record</p>
+            <h1>${row.sequenceName ?? ''}</h1>
+            <p>${row.aptamerName ?? ''}</p>
+          </div>
+          <dl class="sequence-detail-meta">
+            <div><dt>PDB</dt><dd>${row.pdbName ?? 'N/A'}</dd></div>
+            <div><dt>Year</dt><dd>${row.article ?? 'N/A'}</dd></div>
+            <div><dt>Coverage</dt><dd>${row.sequence ?? 'N/A'}</dd></div>
+            <div><dt>Confidence</dt><dd>${row.confidence ?? 'N/A'}</dd></div>
+          </dl>
+        </div>
       </div>
+
+      ${renderSequenceDetailTimeline()}
 
       <section class="sequence-detail-panel">
         <h2>Description</h2>
-        <div class="sequence-detail-rule"></div>
         <div class="sequence-detail-placeholder">
-          <p>Description content will be added here.</p>
+          <p>${row.aptamerName ?? 'Description content will be added here.'}</p>
         </div>
       </section>
 
       <section class="sequence-detail-panel">
         <h2>Primary Sequence</h2>
-        <div class="sequence-detail-rule"></div>
         <div class="sequence-secondary-block">
           <code class="sequence-secondary-code sequence-primary-code">${renderColoredSequence(row.type ?? '')}</code>
         </div>
@@ -532,19 +586,16 @@ function sequenceDetailPage() {
 
       <section class="sequence-detail-panel">
         <h2>Secondary Structure</h2>
-        <div class="sequence-detail-rule"></div>
         ${renderSequenceDetailSecondaryContent(row)}
       </section>
 
       <section class="sequence-detail-panel">
         <h2>Tertiary Structure</h2>
-        <div class="sequence-detail-rule"></div>
         ${renderSequenceDetailTertiaryContent(row)}
       </section>
 
       <section class="sequence-detail-panel">
         <h2>Reference</h2>
-        <div class="sequence-detail-rule"></div>
         ${renderSequenceDetailReferenceContent(row)}
       </section>
     </section>
@@ -1376,6 +1427,7 @@ function render(options = {}) {
   initMolstarModule();
   initHomeStructureShowcase();
   initSequenceDetailMolstar();
+  initSequenceDetailForna();
   initSequenceDetailSecondaryHeatmap();
   initAnimatedStats();
   initHomeDashboardFilters();
