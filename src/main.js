@@ -13,7 +13,6 @@ import {
   initMolstarModule,
   initHomeStructureShowcase,
   initSequenceDetailMolstar,
-  initSequenceDetailForna,
   initSequenceDetailSecondaryHeatmap
 } from './modules.js';
 import {
@@ -175,21 +174,16 @@ function renderSequenceDetailTimeline() {
   </section>`;
 }
 
-function renderSequenceDetailFornaPanel(row, structureText) {
+function renderSequenceDetailFornaPanel() {
   return `<section class="sequence-secondary-card sequence-secondary-forna-card">
-    <div class="sequence-secondary-card-header">
-      <h3>Forna Secondary Structure</h3>
-      <span id="sequence-detail-forna-status" class="mini-note">Loading Forna viewer…</span>
+    <div class="sequence-detail-forna-copy">
+      <h3>RNA Secondary Structure Viewer (Forna)</h3>
+      <p>Forna module with custom nucleotide colors (aptamer-style).</p>
     </div>
     <div class="sequence-detail-forna-frame">
-      <div
-        id="sequence-detail-forna"
-        class="sequence-detail-forna-host"
-        data-sequence="${row.type ?? ''}"
-        data-structure="${structureText ?? ''}"
-        aria-label="Forna secondary structure viewer"
-      ></div>
+      <div class="sequence-detail-forna-host" aria-label="Blank Forna secondary structure viewer"></div>
     </div>
+    <p class="sequence-detail-forna-note">Secondary structure viewer reserved for future rendering.</p>
   </section>`;
 }
 
@@ -219,7 +213,7 @@ function renderSequenceDetailSecondaryContent(row) {
         />
       </section>
 
-      ${renderSequenceDetailFornaPanel(row, row.structureText ?? '')}
+      ${renderSequenceDetailFornaPanel()}
     </div>`;
   }
 
@@ -319,7 +313,7 @@ function renderSequenceDetailSecondaryContent(row) {
         ></div>
       </section>
 
-      ${renderSequenceDetailFornaPanel(row, structureText)}
+      ${renderSequenceDetailFornaPanel()}
       </div>
 
       <aside class="sequence-secondary-side">
@@ -1427,7 +1421,6 @@ function render(options = {}) {
   initMolstarModule();
   initHomeStructureShowcase();
   initSequenceDetailMolstar();
-  initSequenceDetailForna();
   initSequenceDetailSecondaryHeatmap();
   initAnimatedStats();
   initHomeDashboardFilters();

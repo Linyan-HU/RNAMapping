@@ -1386,6 +1386,8 @@ tbody tr:hover {
 }
 
 .sequence-detail-timeline {
+  --timeline-track-x: 30px;
+  --timeline-track-width: 4px;
   position: relative;
   display: grid;
   gap: 14px;
@@ -1396,10 +1398,10 @@ tbody tr:hover {
 .sequence-detail-timeline::before {
   content: "";
   position: absolute;
-  left: 30px;
+  left: var(--timeline-track-x);
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: var(--timeline-track-width);
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(23, 75, 58, 0.3), rgba(23, 75, 58, 0.72), rgba(23, 75, 58, 0.22));
 }
@@ -1416,14 +1418,15 @@ tbody tr:hover {
 .sequence-detail-timeline-item::before {
   content: "";
   position: absolute;
-  left: -151px;
-  top: 22px;
+  left: calc(var(--timeline-track-x) + (var(--timeline-track-width) / 2) - 168px);
+  top: 34px;
   width: 24px;
   height: 24px;
   border: 5px solid #174B3A;
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 0 0 0 rgba(23, 75, 58, 0);
+  transform: translate(-50%, -50%);
   transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
 }
 
@@ -1479,7 +1482,7 @@ tbody tr:hover {
 .sequence-detail-timeline-item:focus-within::before {
   background: #174B3A;
   box-shadow: 0 0 0 12px rgba(23, 75, 58, 0.12);
-  transform: translateX(-6px) scale(1.12);
+  transform: translate(-50%, -50%) scale(1.12);
 }
 
 .sequence-detail-timeline-item:hover::after,
@@ -1716,42 +1719,54 @@ tbody tr:hover {
 
 .sequence-secondary-forna-card {
   display: grid;
-  gap: 18px;
+  gap: 20px;
+  padding: 28px 28px 24px;
+  border: 1px solid rgba(23, 75, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: none;
+}
+
+.sequence-detail-forna-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.sequence-detail-forna-copy h3 {
+  margin: 0;
+  color: #14221C;
+  font-size: 1.28rem;
+  line-height: 1.25;
+}
+
+.sequence-detail-forna-copy p,
+.sequence-detail-forna-note {
+  margin: 0;
+  color: #344a45;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .sequence-detail-forna-frame {
-  border: 1px solid rgba(23, 75, 58, 0.14);
-  border-radius: 8px;
+  border: 4px solid #2d7bd4;
+  border-radius: 22px;
   background: #ffffff;
-  min-height: 360px;
+  min-height: 420px;
   padding: 16px;
   overflow: hidden;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
-    0 10px 28px rgba(20, 34, 28, 0.05);
+  box-shadow: none;
 }
 
 .sequence-detail-forna-host {
-  min-height: 322px;
+  min-height: 380px;
   width: 100%;
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(127, 179, 255, 0.06), transparent 24%),
-    #ffffff;
+  border-radius: 16px;
+  background: #ffffff;
+  overflow: hidden;
 }
 
-.sequence-detail-forna-host svg {
-  width: 100%;
-  height: 100%;
-}
-
-.sequence-detail-forna-fallback {
-  min-height: 322px;
-  display: grid;
-  place-items: center;
-  color: var(--textMuted);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+.sequence-detail-forna-host > * {
+  display: none !important;
 }
 
 .sequence-secondary-side {
@@ -2700,12 +2715,10 @@ main {
   }
 
   .sequence-detail-timeline {
+    --timeline-track-x: 14px;
+    --timeline-track-width: 4px;
     gap: 16px;
     padding: 12px 0 16px 42px;
-  }
-
-  .sequence-detail-timeline::before {
-    left: 14px;
   }
 
   .sequence-detail-timeline-item {
@@ -2715,8 +2728,8 @@ main {
   }
 
   .sequence-detail-timeline-item::before {
-    left: -41px;
-    top: 8px;
+    left: calc(var(--timeline-track-x) + (var(--timeline-track-width) / 2) - 42px);
+    top: 17px;
     width: 18px;
     height: 18px;
     border-width: 4px;
@@ -2737,6 +2750,20 @@ main {
   .sequence-detail-timeline-card {
     padding: 14px 16px;
     min-height: 80px;
+  }
+
+  .sequence-secondary-forna-card {
+    padding: 22px 18px 20px;
+  }
+
+  .sequence-detail-forna-frame {
+    min-height: 300px;
+    border-width: 3px;
+    border-radius: 18px;
+  }
+
+  .sequence-detail-forna-host {
+    min-height: 264px;
   }
 
   .sequence-detail-timeline-item:hover .sequence-detail-timeline-card,
