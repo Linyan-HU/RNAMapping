@@ -351,6 +351,7 @@ function renderSequenceDetailTertiaryContent(row) {
       data-structure-url="./${row.structureFile}"
       data-structure-format="cif"
       data-structure-label="${row.pdbName ?? 'local structure'}"
+      data-structure-sequence="${row.type ?? ''}"
     ></div>
   </div>`;
 }

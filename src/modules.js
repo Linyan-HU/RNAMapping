@@ -453,6 +453,102 @@ async function loadMolstarAssets() {
   }
 }
 
+const MOLSTAR_SEGMENT_PALETTE = [
+  { r: 184, g: 50, b: 51 },
+  { r: 46, g: 161, b: 3 },
+  { r: 241, g: 125, b: 7 },
+  { r: 8, g: 69, b: 149 },
+  { r: 180, g: 72, b: 181 },
+  { r: 17, g: 138, b: 178 },
+  { r: 214, g: 81, b: 118 },
+  { r: 120, g: 99, b: 197 }
+];
+
+function normalizeRnaSequence(sequence) {
+  return String(sequence || '')
+    .toUpperCase()
+    .replace(/[^ACGUT]/g, '')
+    .replace(/T/g, 'U');
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function createSeededRandom(seedValue) {
+  let state = seedValue >>> 0;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function shufflePalette(randomizer) {
+  const colors = [...MOLSTAR_SEGMENT_PALETTE];
+  for (let index = colors.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(randomizer() * (index + 1));
+    [colors[index], colors[swapIndex]] = [colors[swapIndex], colors[index]];
+  }
+  return colors;
+}
+
+function buildRandomMolstarSelections(sequence, seedLabel = 'RNA', chainId = 'A') {
+  const normalizedSequence = normalizeRnaSequence(sequence);
+  if (!normalizedSequence) return [];
+
+  const randomizer = createSeededRandom(hashString(`${seedLabel}:${normalizedSequence.length}`));
+  const palette = shufflePalette(randomizer);
+  const selections = [];
+  let residueNumber = 1;
+  let colorIndex = 0;
+
+  while (residueNumber <= normalizedSequence.length) {
+    const residuesLeft = normalizedSequence.length - residueNumber + 1;
+    const segmentSize = Math.min(
+      residuesLeft,
+      Math.max(1, Math.round((normalizedSequence.length / 6) * (0.55 + randomizer() * 0.9)))
+    );
+
+    selections.push({
+      struct_asym_id: chainId,
+      start_residue_number: residueNumber,
+      end_residue_number: residueNumber + segmentSize - 1,
+      color: palette[colorIndex % palette.length]
+    });
+
+    residueNumber += segmentSize;
+    colorIndex += 1;
+  }
+
+  return selections;
+}
+
+function applyMolstarColoring(viewer, sequence, seedLabel, chainId = 'A', attempt = 0) {
+  const selections = buildRandomMolstarSelections(sequence, seedLabel, chainId);
+  if (!viewer?.visual?.select || !selections.length) return;
+
+  window.setTimeout(() => {
+    try {
+      if (viewer.visual.clearSelection) {
+        viewer.visual.clearSelection();
+      }
+      viewer.visual.select({
+        data: selections,
+        nonSelectedColor: { r: 255, g: 255, b: 255 }
+      });
+    } catch (_error) {
+      if (attempt < 8) {
+        applyMolstarColoring(viewer, sequence, seedLabel, chainId, attempt + 1);
+      }
+    }
+  }, attempt === 0 ? 450 : 250);
+}
+
 async function loadFornaAssets() {
   if (!document.getElementById('forna-css')) {
     const css = document.createElement('link');
@@ -585,6 +681,7 @@ export async function initSequenceDetailMolstar() {
   const structureUrl = container.dataset.structureUrl;
   const structureFormat = container.dataset.structureFormat || 'cif';
   const structureLabel = container.dataset.structureLabel || 'local structure';
+  const sequence = container.dataset.structureSequence || '';
   if (!structureUrl) return;
 
   try {
@@ -596,8 +693,9 @@ export async function initSequenceDetailMolstar() {
       hideControls: true,
       bgColor: { r: 255, g: 255, b: 255 }
     });
+    applyMolstarColoring(viewer, sequence, structureLabel);
 
-    status.textContent = `Interactive Mol* view loaded from ${structureLabel}.`;
+    status.textContent = `Interactive Mol* view loaded from ${structureLabel} with random segmented coloring.`;
   } catch (_e) {
     status.textContent = '3D viewer unavailable right now.';
   }
@@ -722,11 +820,13 @@ export async function initHomeStructureShowcase() {
         );
       }
 
+      applyMolstarColoring(viewer, sequence, label);
+
       if (meta) {
         meta.innerHTML = `<strong>${name}</strong><span>${label}</span>`;
       }
       renderSecondary(label, sequence, structureText);
-      status.textContent = `Interactive Mol* view loaded from ${label}.`;
+      status.textContent = `Interactive Mol* view loaded from ${label} with random segmented coloring.`;
     } catch (_e) {
       renderSecondary(label, sequence, structureText);
       status.textContent = '3D viewer unavailable right now.';
